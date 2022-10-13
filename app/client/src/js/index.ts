@@ -14,7 +14,7 @@ require('xterm/css/xterm.css');
 require('../css/style.css');
 
 /* global Blob, logBtn, credentialsBtn, reauthBtn, downloadLogBtn */ // eslint-disable-line
-const term = new Terminal();
+const term = new Terminal({ allowProposedApi: true });
 // DOM properties
 const fitAddon = new FitAddon();
 const terminalContainer = document.getElementById('terminal-container');
