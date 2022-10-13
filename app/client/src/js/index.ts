@@ -2,6 +2,7 @@
 import { io } from 'socket.io-client';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { ImageAddon } from 'xterm-addon-image';
 import { library, dom } from '@fortawesome/fontawesome-svg-core';
 import { faBars, faClipboard, faDownload, faKey, faCog } from '@fortawesome/free-solid-svg-icons';
 
@@ -43,6 +44,20 @@ const countdown = document.getElementById('countdown');
 const fitAddon = new FitAddon();
 const terminalContainer = document.getElementById('terminal-container');
 term.loadAddon(fitAddon);
+//
+// const opts = {
+//   enableSizeReports: false,
+//   pixelLimit: 16777216, // limit to 4096 * 4096 pixels
+//   sixelSupport: true,
+//   sixelScrolling: true,
+//   sixelPaletteLimit: 256,
+//   sixelSizeLimit: 25000000,
+//   storageLimit: 128,
+//   showPlaceholder: true
+// };
+
+const imageAddon = new ImageAddon('/static/xterm-addon-image-worker.js');//,opts);
+term.loadAddon(imageAddon);
 term.open(terminalContainer);
 term.focus();
 fitAddon.fit();

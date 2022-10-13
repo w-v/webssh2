@@ -48,6 +48,7 @@ app.use('/ssh', express.static(publicPath, config.express.ssh));
 app.use(basicAuth);
 app.get('/ssh/reauth', reauth);
 app.get('/ssh/host/:host?', connect);
+app.use('/static', express.static(publicPath));
 app.use(notfound);
 app.use(handleErrors);
 
