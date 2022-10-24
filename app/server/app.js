@@ -100,12 +100,14 @@ const onConnection = (socket) => {
       stopApp('All clients disconnected');
     }
   });
-  socket.on('geometry', (cols, rows) => {
+  socket.on('geometry', (cols, rows, height, width) => {
     // TODO need to rework how we pass settings to ssh2, this is less than ideal
     const s = socket;
     s.request.session.ssh.cols = cols;
     s.request.session.ssh.rows = rows;
-    webssh2debug(socket, `SOCKET GEOMETRY: termCols = ${cols}, termRows = ${rows}`);
+    s.request.session.ssh.height = height;
+    s.request.session.ssh.width = width;
+    webssh2debug(socket, `SOCKET GEOMETRY: termCols = ${cols}, termRows = ${rows}, height = ${height}, width = ${width}`);
   });
 };
 

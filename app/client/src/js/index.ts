@@ -146,8 +146,10 @@ function drawMenu() {
 
 function resizeScreen() {
   fitAddon.fit();
-  socket.emit('resize', { cols: term.cols, rows: term.rows });
-  debug(`resize: ${JSON.stringify({ cols: term.cols, rows: term.rows })}`);
+  const width = terminalContainer.clientWidth;
+  const height = terminalContainer.clientHeight;
+  socket.emit('resize', { cols: term.cols, rows: term.rows, height, width });
+  debug(`resize: ${JSON.stringify({ cols: term.cols, rows: term.rows, height, width })}`);
 }
 
 window.addEventListener('resize', resizeScreen, false);
@@ -164,8 +166,10 @@ socket.on('data', (data: string | Uint8Array) => {
 });
 
 socket.on('connect', () => {
-  socket.emit('geometry', term.cols, term.rows);
-  debug(`geometry: ${term.cols}, ${term.rows}`);
+  const width = terminalContainer.clientWidth;
+  const height = terminalContainer.clientHeight;
+  socket.emit('geometry', term.cols, term.rows, height, width);
+  debug(`geometry: ${term.cols}, ${term.rows}, ${height}, ${width}`);
 });
 
 socket.on(

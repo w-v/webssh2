@@ -133,8 +133,8 @@ module.exports = function appSocket(socket) {
       socket.emit('status', 'SSH CONNECTION ESTABLISHED');
       socket.emit('statusBackground', 'green');
       socket.emit('allowreplay', socket.request.session.ssh.allowreplay);
-      const { term, cols, rows } = socket.request.session.ssh;
-      conn.shell({ term, cols, rows }, (err, stream) => {
+      const { term, cols, rows, height, width } = socket.request.session.ssh;
+      conn.shell({ term, cols, rows, height, width }, (err, stream) => {
         if (err) {
           logError(socket, `EXEC ERROR`, err);
           conn.end();
@@ -168,7 +168,7 @@ module.exports = function appSocket(socket) {
           webssh2debug(socket, `SOCKET CONTROL: ${controlData}`);
         });
         socket.on('resize', (data) => {
-          stream.setWindow(data.rows, data.cols);
+          stream.setWindow(data.rows, data.cols, data.height, data.width);
           webssh2debug(socket, `SOCKET RESIZE: ${JSON.stringify([data.rows, data.cols])}`);
         });
         socket.on('data', (data) => {
