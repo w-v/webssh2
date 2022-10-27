@@ -3,6 +3,8 @@ import { io } from 'socket.io-client';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { ImageAddon } from 'xterm-addon-image';
+import { WebLinksAddon } from 'xterm-addon-web-links';
+import { WebglAddon } from 'xterm-addon-webgl';
 import { library, dom } from '@fortawesome/fontawesome-svg-core';
 import { faBars, faClipboard, faDownload, faKey, faCog } from '@fortawesome/free-solid-svg-icons';
 
@@ -33,7 +35,9 @@ term.loadAddon(fitAddon);
 
 const imageAddon = new ImageAddon('/static/xterm-addon-image-worker.js');//,opts);
 term.loadAddon(imageAddon);
+term.loadAddon(new WebLinksAddon());
 term.open(terminalContainer);
+term.loadAddon(new WebglAddon());
 term.focus();
 fitAddon.fit();
 

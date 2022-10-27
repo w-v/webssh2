@@ -43,7 +43,9 @@
     "serve-favicon": "^2.5.0",
     "socket.io": "^4.5.1",
     "ssh2": "^1.11.0",
-    "validator": "^13.7.0"
+    "validator": "^13.7.0",
+    "xterm-addon-web-links": "^0.7.0",
+    "xterm-addon-webgl": "^0.13.0"
   },
   "scripts": {
     "start": "node index.js",
