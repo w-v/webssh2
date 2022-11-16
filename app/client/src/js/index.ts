@@ -95,7 +95,3 @@ socket.on(
     term.options = data;
   }
 );
-
-term.onTitleChange((title) => {
-  document.title = title;
-});

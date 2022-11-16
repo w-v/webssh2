@@ -105,19 +105,8 @@ module.exports = function appSocket(socket) {
       socket.emit('data', data.replace(/\r?\n/g, '\r\n').toString('utf-8'));
     });
 
-    conn.on('handshake', (data => {
+    conn.on('handshake', (() => {
       socket.emit('setTerminalOpts', socket.request.session.ssh.terminal);
-      socket.emit('menu');
-      socket.emit('allowreauth', socket.request.session.ssh.allowreauth);
-      socket.emit('title', `ssh://${socket.request.session.ssh.host}`);
-      if (socket.request.session.ssh.header.background)
-        socket.emit('headerBackground', socket.request.session.ssh.header.background);
-      if (socket.request.session.ssh.header.name)
-        socket.emit('header', socket.request.session.ssh.header.name);
-      socket.emit(
-        'footer',
-        `ssh://${socket.request.session.username}@${socket.request.session.ssh.host}:${socket.request.session.ssh.port}`
-      );
     }));
 
     conn.on('ready', () => {
@@ -130,9 +119,6 @@ module.exports = function appSocket(socket) {
         `LOGIN user=${socket.request.session.username} from=${socket.handshake.address} host=${socket.request.session.ssh.host}:${socket.request.session.ssh.port}`
       );
       login = true;
-      socket.emit('status', 'SSH CONNECTION ESTABLISHED');
-      socket.emit('statusBackground', 'green');
-      socket.emit('allowreplay', socket.request.session.ssh.allowreplay);
       const { term, cols, rows, height, width } = socket.request.session.ssh;
       conn.shell({ term, cols, rows, height, width }, (err, stream) => {
         if (err) {
@@ -151,21 +137,6 @@ module.exports = function appSocket(socket) {
           logError(socket, 'SOCKET ERROR', errMsg);
           conn.end();
           socket.disconnect(true);
-        });
-        socket.on('control', (controlData) => {
-          if (controlData === 'replayCredentials' && socket.request.session.ssh.allowreplay) {
-            stream.write(`${socket.request.session.userpassword}\n`);
-          }
-          if (controlData === 'reauth' && socket.request.session.username && login === true) {
-            auditLog(
-              socket,
-              `LOGOUT user=${socket.request.session.username} from=${socket.handshake.address} host=${socket.request.session.ssh.host}:${socket.request.session.ssh.port}`
-            );
-            login = false;
-            conn.end();
-            socket.disconnect(true);
-          }
-          webssh2debug(socket, `SOCKET CONTROL: ${controlData}`);
         });
         socket.on('resize', (data) => {
           stream.setWindow(data.rows, data.cols, data.height, data.width);
