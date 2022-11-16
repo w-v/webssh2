@@ -5,6 +5,7 @@ import { FitAddon } from 'xterm-addon-fit';
 import { ImageAddon } from 'xterm-addon-image';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { WebglAddon } from 'xterm-addon-webgl';
+import { CanvasAddon } from 'xterm-addon-canvas';
 import { library, dom } from '@fortawesome/fontawesome-svg-core';
 import { faBars, faClipboard, faDownload, faKey, faCog } from '@fortawesome/free-solid-svg-icons';
 
@@ -37,7 +38,16 @@ const imageAddon = new ImageAddon('/static/xterm-addon-image-worker.js');//,opts
 term.loadAddon(imageAddon);
 term.loadAddon(new WebLinksAddon());
 term.open(terminalContainer);
-term.loadAddon(new WebglAddon());
+
+try {
+  const webglAddon = new WebglAddon();
+  webglAddon.onContextLoss(() => {
+    webglAddon.dispose();
+  });
+  term.loadAddon(webglAddon);
+} catch (error) {
+  term.loadAddon(new CanvasAddon());
+}
 term.focus();
 fitAddon.fit();
 
