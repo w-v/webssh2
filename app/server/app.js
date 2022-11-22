@@ -21,6 +21,7 @@ const session = require('express-session')(config.express);
 const appSocket = require('./socket');
 const { setDefaultCredentials, basicAuth } = require('./util');
 const { webssh2debug } = require('./logging');
+const debug = require('debug');
 const { connect, notfound, handleErrors } = require('./routes');
 
 setDefaultCredentials(config.user);
@@ -44,7 +45,7 @@ app.use(favicon(path.join(publicPath, 'favicon.ico')));
 app.use(express.urlencoded({ extended: true }));
 app.use('/ssh', express.static(publicPath, config.express.ssh));
 app.use('/static', express.static(publicPath));
-app.use(basicAuth);
+// app.use(basicAuth);
 app.use(connect);
 app.use(notfound);
 app.use(handleErrors);
@@ -64,6 +65,7 @@ io.on('connection', appSocket);
 // socket.io
 // expose express session with socket.request.session
 io.use((socket, next) => {
+  debug('WebSSH2')('expose express session');
   socket.request.res ? session(socket.request, socket.request.res, next) : next(next); // eslint disable-line
 });
 

@@ -53,6 +53,7 @@ fitAddon.fit();
 
 const socket = io({
   path: '/ssh/socket.io',
+  // transports:  ['websocket']
 });
 
 function resizeScreen() {
@@ -64,6 +65,15 @@ function resizeScreen() {
 }
 
 window.addEventListener('resize', resizeScreen, false);
+
+function closeSession() {
+  debug('window close requested, sending Ctrl-C');
+  socket.emit('data', '\u0003');
+  socket.disconnect();
+}
+
+window.addEventListener('beforeunload', closeSession);
+window.addEventListener('unload', closeSession);
 
 term.onData((data) => {
   socket.emit('data', data);

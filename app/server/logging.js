@@ -21,6 +21,16 @@ function webssh2debug(socket, msg) {
   debug('WebSSH2')(`${prefix(socket)} ${msg}`);
 }
 
+
+function prefixreq(request) {
+  return `(${request.sessionID})`;
+}
+
+// public
+function webssh2debugreq(req, msg) {
+  debug('WebSSH2')(`${prefixreq(req)} ${msg}`);
+}
+
 /**
  * audit log to console
  * @param {object} socket Socket information
@@ -44,4 +54,4 @@ function logError(socket, myFunc, err) {
   socket.emit('ssherror', `SSH ${myFunc}: ${err}`);
 }
 
-module.exports = { logError, auditLog, webssh2debug };
+module.exports = { logError, auditLog, webssh2debug, webssh2debugreq };

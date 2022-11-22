@@ -2,15 +2,19 @@
 // ssh.js
 const validator = require('validator');
 const path = require('path');
+const debug = require('debug');
 
 const nodeRoot = path.dirname(require.main.filename);
 
 const publicPath = path.join(nodeRoot, 'client', 'public');
 const { parseBool } = require('./util');
 const config = require('./config');
+const { webssh2debugreq } = require('./logging');
+const { setDefaultCredentials, basicAuth } = require('./util');
 
-exports.connect = function connect(req, res) {
-  res.sendFile(path.join(path.join(publicPath, 'client.htm')));
+exports.connect = function connect(req, res, next) {
+  debug('WebSSH2')(`connect ${req.url}`);
+  basicAuth(req);
 
   const { host, port } = config.ssh;
   const { text: header, background: headerBackground } = config.header;
@@ -66,6 +70,10 @@ exports.connect = function connect(req, res) {
     },
     readyTimeout,
   };
+
+  res.sendFile(path.join(path.join(publicPath, 'client.htm')));
+
+
   if (req.session.ssh.header.name) validator.escape(req.session.ssh.header.name);
   if (req.session.ssh.header.background) validator.escape(req.session.ssh.header.background);
 };

@@ -189,7 +189,13 @@ module.exports = function appSocket(socket) {
       (socket.request.session.userpassword || socket.request.session.privatekey) &&
       socket.request.session.ssh
     ) {
+      webssh2debug(
+        socket,
+        `CONN CONNECT: ${socket.request.session} ${socket.request.username}
+        )}`
+      );
       // console.log('hostkeys: ' + hostkeys[0].[0])
+      //
       const { ssh } = socket.request.session;
       ssh.username = socket.request.session.username;
       ssh.password = socket.request.session.userpassword;
@@ -203,6 +209,18 @@ module.exports = function appSocket(socket) {
           socket.handshake
         )}`
       );
+      if (!socket.request.session.username) {
+        webssh2debug(socket, `username missing`);
+      }
+      if (!socket.request.session.userpassword) {
+        webssh2debug(socket, `userpassword missing`);
+      }
+      if (!socket.request.session.privatekey) {
+        webssh2debug(socket, `privatekey missing`);
+      }
+      if (!socket.request.session.ssh) {
+        webssh2debug(socket, `ssh missing}`);
+      }
       socket.emit('ssherror', 'WEBSOCKET ERROR - Refresh the browser and try again');
       socket.request.session.destroy();
       socket.disconnect(true);
