@@ -16,14 +16,14 @@ function prefix(socket) {
   return `(${socket.request.sessionID}/${socket.id})`;
 }
 
-// public
-function webssh2debug(socket, msg) {
-  debug('WebSSH2')(`${prefix(socket)} ${msg}`);
-}
-
 
 function prefixreq(request) {
   return `(${request.sessionID})`;
+}
+
+// public
+function webssh2debug(socket, msg) {
+  debug('WebSSH2')(`${prefix(socket)} ${msg}`);
 }
 
 // public

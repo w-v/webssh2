@@ -26,7 +26,7 @@ const configDefault = {
   express: {
     secret: crypto.randomBytes(20).toString('hex'),
     name: 'WebSSH2',
-    resave: true,
+    resave: false,
     saveUninitialized: false,
     unset: 'destroy',
     ssh: {

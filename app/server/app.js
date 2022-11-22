@@ -20,7 +20,7 @@ const session = require('express-session')(config.express);
 
 const appSocket = require('./socket');
 const { setDefaultCredentials, basicAuth } = require('./util');
-const { webssh2debug } = require('./logging');
+const { webssh2debug, webssh2debugreq } = require('./logging');
 const debug = require('debug');
 const { connect, notfound, handleErrors } = require('./routes');
 
@@ -36,9 +36,15 @@ function safeShutdownGuard(req, res, next) {
   if (!shutdownMode) return next();
   res.status(503).end('Service unavailable: Server shutting down');
 }
+
+function session_access(req, res, next){
+	debug('WebSSH2')(`accessing session ${req.url}`)
+	session(req, res, next);
+	debug('WebSSH2')(`got session ${req.sessionID}`)
+}
 // express
 app.use(safeShutdownGuard);
-app.use(session);
+app.use(session_access);
 if (config.accesslog) app.use(logger('common'));
 app.disable('x-powered-by');
 app.use(favicon(path.join(publicPath, 'favicon.ico')));
@@ -65,8 +71,15 @@ io.on('connection', appSocket);
 // socket.io
 // expose express session with socket.request.session
 io.use((socket, next) => {
-  debug('WebSSH2')('expose express session');
-  socket.request.res ? session(socket.request, socket.request.res, next) : next(next); // eslint disable-line
+  webssh2debug(socket, 'expose express session');
+  if (socket.request.res){
+    webssh2debug(socket, 'session(socket.request, socket.request.res, next);');
+    session(socket.request, socket.request.res, next);
+  }
+  else{
+    debug('WebSSH2')('next(next)');
+    next(next);
+  }
 });
 
 function countdownTimer() {
@@ -93,14 +106,17 @@ signals.forEach((signal) =>
 module.exports = { server, config };
 
 const onConnection = (socket) => {
+  webssh2debug(socket, 'onConnection');
   connectionCount += 1;
   socket.on('disconnect', () => {
+    webssh2debug(socket, 'on disconnect');
     connectionCount -= 1;
     if (connectionCount <= 0 && shutdownMode) {
       stopApp('All clients disconnected');
     }
   });
   socket.on('geometry', (cols, rows, height, width) => {
+    webssh2debug(socket, 'on geometry');
     // TODO need to rework how we pass settings to ssh2, this is less than ideal
     const s = socket;
     s.request.session.ssh.cols = cols;

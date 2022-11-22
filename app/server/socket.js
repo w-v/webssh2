@@ -11,7 +11,7 @@ const CIDRMatcher = require('cidr-matcher');
 const validator = require('validator');
 const dnsPromises = require('dns').promises;
 const util = require('util');
-const { webssh2debug, auditLog, logError } = require('./logging');
+const { webssh2debugreq, webssh2debug, auditLog, logError } = require('./logging');
 
 /**
  * parse conn errors
@@ -73,6 +73,8 @@ async function checkSubnet(socket) {
 module.exports = function appSocket(socket) {
   let login = false;
 
+  webssh2debugreq(socket, 'appSocket');
+
   socket.once('disconnecting', (reason) => {
     webssh2debug(socket, `SOCKET DISCONNECTING: ${reason}`);
     if (login === true) {
@@ -101,11 +103,13 @@ module.exports = function appSocket(socket) {
     const conn = new SSH();
 
     conn.on('banner', (data) => {
+      webssh2debug(socket, 'on banner');
       // need to convert to cr/lf for proper formatting
       socket.emit('data', data.replace(/\r?\n/g, '\r\n').toString('utf-8'));
     });
 
     conn.on('handshake', (() => {
+      webssh2debug(socket, 'on handshake');
       socket.emit('setTerminalOpts', socket.request.session.ssh.terminal);
     }));
 
@@ -191,7 +195,7 @@ module.exports = function appSocket(socket) {
     ) {
       webssh2debug(
         socket,
-        `CONN CONNECT: ${socket.request.session} ${socket.request.username}
+        `CONN CONNECT: ${socket.request.session} ${socket.request.session.username}
         )}`
       );
       // console.log('hostkeys: ' + hostkeys[0].[0])

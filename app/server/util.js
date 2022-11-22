@@ -1,7 +1,7 @@
 /* jshint esversion: 6, asi: true, node: true */
 // util.js
 
-const debug = require('debug');
+const { webssh2debug, webssh2debugreq } = require('./logging');
 
 let defaultCredentials = { username: null, password: null, privatekey: null };
 
@@ -16,7 +16,7 @@ exports.setDefaultCredentials = function setDefaultCredentials({
 
 exports.basicAuth = function basicAuth(req, res, next) {
   const { username, password, privatekey } = defaultCredentials;
-  debug('WebSSH2')(`basic auth set ${req.url}`);
+  webssh2debugreq(req, `basic auth set ${req.url}`);
   req.session.username = username;
   req.session.userpassword = password;
   req.session.privatekey = privatekey;
