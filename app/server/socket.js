@@ -123,8 +123,19 @@ module.exports = function appSocket(socket) {
         `LOGIN user=${socket.request.session.username} from=${socket.handshake.address} host=${socket.request.session.ssh.host}:${socket.request.session.ssh.port}`
       );
       login = true;
-      const { term, cols, rows, height, width } = socket.request.session.ssh;
+      setTimeout( () => {
+      let { term, cols, rows, height, width } = socket.request.session.ssh;
+      let update = false;
+      if (!cols) {
+        update = true;
+      }
+      webssh2debug(socket, `CONNECT GEOMETRY: termCols = ${cols}, termRows = ${rows}, height = ${height}, width = ${width}`);
       conn.shell({ term, cols, rows, height, width }, (err, stream) => {
+        if (update) {
+          ({ term, cols, rows, height, width } = socket.request.session.ssh);
+          stream.setWindow(rows, cols, height, width);
+          webssh2debug(socket, `POST CONNECT GEOMETRY: termCols = ${cols}, termRows = ${rows}, height = ${height}, width = ${width}`);
+        }
         if (err) {
           logError(socket, `EXEC ERROR`, err);
           conn.end();
@@ -144,7 +155,12 @@ module.exports = function appSocket(socket) {
         });
         socket.on('resize', (data) => {
           stream.setWindow(data.rows, data.cols, data.height, data.width);
-          webssh2debug(socket, `SOCKET RESIZE: ${JSON.stringify([data.rows, data.cols])}`);
+          webssh2debug(socket, `SOCKET RESIZE: ${JSON.stringify([data.rows, data.cols, data.height, data.width])}`);
+        });
+        socket.on('geometry', (cols_, rows_, height_, width_) => {
+          webssh2debug(socket, `SOCKET POST CONNECT GEOMETRY: termCols = ${cols_}, termRows = ${rows_}, height = ${height_}, width = ${width_}`);
+          stream.setWindow(rows_, cols_, height_, width_);
+          webssh2debug(socket, `SOCKET GEOMETRY RESIZE: ${JSON.stringify([rows_, cols_, height_, width_])}`);
         });
         socket.on('data', (data) => {
           stream.write(data);
@@ -169,7 +185,7 @@ module.exports = function appSocket(socket) {
         stream.stderr.on('data', (data) => {
           console.error(`STDERR: ${data}`);
         });
-      });
+      }); }, 1000);
     });
 
     conn.on('end', (err) => {

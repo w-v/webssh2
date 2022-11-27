@@ -1,5 +1,7 @@
 FROM node:16-alpine
 
+# ENV DEBUG="WebSSH2"
+
 RUN apk update && apk add bash
 
 WORKDIR /usr/src

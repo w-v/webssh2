@@ -18,10 +18,10 @@ const favicon = require('serve-favicon');
 const io = require('socket.io')(server, config.socketio);
 const session = require('express-session')(config.express);
 
+const debug = require('debug');
 const appSocket = require('./socket');
 const { setDefaultCredentials, basicAuth } = require('./util');
 const { webssh2debug, webssh2debugreq } = require('./logging');
-const debug = require('debug');
 const { connect, notfound, handleErrors } = require('./routes');
 
 setDefaultCredentials(config.user);
