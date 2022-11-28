@@ -123,69 +123,76 @@ module.exports = function appSocket(socket) {
         `LOGIN user=${socket.request.session.username} from=${socket.handshake.address} host=${socket.request.session.ssh.host}:${socket.request.session.ssh.port}`
       );
       login = true;
-      setTimeout( () => {
-      let { term, cols, rows, height, width } = socket.request.session.ssh;
-      let update = false;
-      if (!cols) {
-        update = true;
-      }
-      webssh2debug(socket, `CONNECT GEOMETRY: termCols = ${cols}, termRows = ${rows}, height = ${height}, width = ${width}`);
-      conn.shell({ term, cols, rows, height, width }, (err, stream) => {
-        if (update) {
-          ({ term, cols, rows, height, width } = socket.request.session.ssh);
-          stream.setWindow(rows, cols, height, width);
-          webssh2debug(socket, `POST CONNECT GEOMETRY: termCols = ${cols}, termRows = ${rows}, height = ${height}, width = ${width}`);
-        }
-        if (err) {
-          logError(socket, `EXEC ERROR`, err);
-          conn.end();
-          socket.disconnect(true);
-          return;
-        }
-        socket.once('disconnect', (reason) => {
-          webssh2debug(socket, `CLIENT SOCKET DISCONNECT: ${util.inspect(reason)}`);
-          conn.end();
-          socket.request.session.destroy();
-        });
-        socket.on('error', (errMsg) => {
-          webssh2debug(socket, `SOCKET ERROR: ${errMsg}`);
-          logError(socket, 'SOCKET ERROR', errMsg);
-          conn.end();
-          socket.disconnect(true);
-        });
-        socket.on('resize', (data) => {
-          stream.setWindow(data.rows, data.cols, data.height, data.width);
-          webssh2debug(socket, `SOCKET RESIZE: ${JSON.stringify([data.rows, data.cols, data.height, data.width])}`);
-        });
-        socket.on('geometry', (cols_, rows_, height_, width_) => {
-          webssh2debug(socket, `SOCKET POST CONNECT GEOMETRY: termCols = ${cols_}, termRows = ${rows_}, height = ${height_}, width = ${width_}`);
-          stream.setWindow(rows_, cols_, height_, width_);
-          webssh2debug(socket, `SOCKET GEOMETRY RESIZE: ${JSON.stringify([rows_, cols_, height_, width_])}`);
-        });
-        socket.on('data', (data) => {
-          stream.write(data);
-        });
-        stream.on('data', (data) => {
-          socket.emit('data', data.toString('utf-8'));
-        });
-        stream.on('close', (code, signal) => {
-          webssh2debug(socket, `STREAM CLOSE: ${util.inspect([code, signal])}`);
-          if (socket.request.session?.username && login === true) {
-            auditLog(
-              socket,
-              `LOGOUT user=${socket.request.session.username} from=${socket.handshake.address} host=${socket.request.session.ssh.host}:${socket.request.session.ssh.port}`
-            );
-            login = false;
+
+
+      const initshell = () => {
+        let { term, cols, rows, height, width } = socket.request.session.ssh;
+        webssh2debug(socket, `CONNECT GEOMETRY: termCols = ${cols}, termRows = ${rows}, height = ${height}, width = ${width}`);
+        conn.shell({ term, cols, rows, height, width }, (err, stream) => {
+          if (err) {
+            logError(socket, `EXEC ERROR`, err);
+            conn.end();
+            socket.disconnect(true);
+            return;
           }
-          if (code !== 0 && typeof code !== 'undefined')
-            logError(socket, 'STREAM CLOSE', util.inspect({ message: [code, signal] }));
-          socket.disconnect(true);
-          conn.end();
+          socket.once('disconnect', (reason) => {
+            webssh2debug(socket, `CLIENT SOCKET DISCONNECT: ${util.inspect(reason)}`);
+            conn.end();
+            socket.request.session.destroy();
+          });
+          socket.on('error', (errMsg) => {
+            webssh2debug(socket, `SOCKET ERROR: ${errMsg}`);
+            logError(socket, 'SOCKET ERROR', errMsg);
+            conn.end();
+            socket.disconnect(true);
+          });
+          socket.on('resize', (data) => {
+            stream.setWindow(data.rows, data.cols, data.height, data.width);
+            webssh2debug(socket, `SOCKET RESIZE: ${JSON.stringify([data.rows, data.cols, data.height, data.width])}`);
+          });
+          socket.on('geometry', (cols_, rows_, height_, width_) => {
+            webssh2debug(socket, `SOCKET POST CONNECT GEOMETRY: termCols = ${cols_}, termRows = ${rows_}, height = ${height_}, width = ${width_}`);
+            stream.setWindow(rows_, cols_, height_, width_);
+            webssh2debug(socket, `SOCKET GEOMETRY RESIZE: ${JSON.stringify([rows_, cols_, height_, width_])}`);
+          });
+          socket.on('data', (data) => {
+            stream.write(data);
+          });
+          stream.on('data', (data) => {
+            socket.emit('data', data.toString('utf-8'));
+          });
+          stream.on('close', (code, signal) => {
+            webssh2debug(socket, `STREAM CLOSE: ${util.inspect([code, signal])}`);
+            if (socket.request.session?.username && login === true) {
+              auditLog(
+                socket,
+                `LOGOUT user=${socket.request.session.username} from=${socket.handshake.address} host=${socket.request.session.ssh.host}:${socket.request.session.ssh.port}`
+              );
+              login = false;
+            }
+            if (code !== 0 && typeof code !== 'undefined')
+              logError(socket, 'STREAM CLOSE', util.inspect({ message: [code, signal] }));
+            socket.disconnect(true);
+            conn.end();
+          });
+          stream.stderr.on('data', (data) => {
+            console.error(`STDERR: ${data}`);
+          });
         });
-        stream.stderr.on('data', (data) => {
-          console.error(`STDERR: ${data}`);
-        });
-      }); }, 1000);
+      }
+
+      const waitForGeom = () => {
+
+        if (socket.request.session.ssh.cols === undefined) {
+          webssh2debugreq(socket, 'Waiting for geom')
+          setTimeout(() => waitForGeom(), 30);
+        } else {
+          initshell();
+        }
+      }
+
+      waitForGeom();
+
     });
 
     conn.on('end', (err) => {
