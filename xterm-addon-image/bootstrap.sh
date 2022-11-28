@@ -1,9 +1,8 @@
 #!/bin/bash
 
-export XTERMJS=5.0.0
+set -e
 
-mkdir xterm-addon-image
-cd xterm-addon-image
+export XTERMJS=5.0.0
 
 # clone xterm.js base repo
 git clone --depth 1 --branch ${XTERMJS} https://github.com/xtermjs/xterm.js.git
@@ -12,7 +11,7 @@ rm -rf .git
 
 # clone addon
 cd addons
-git clone https://github.com/jerch/xterm-addon-image
+git clone https://github.com/w-v/xterm-addon-image
 cd ..
 
 # overwrite files in base repo to have full test integration
@@ -33,3 +32,6 @@ yarn --verbose
 cd addons/xterm-addon-image
 npm run package
 
+cd ../../..
+cp -rn xterm.js/addons/xterm-addon-image xterm-addon-image
+rm -rf xterm.js
